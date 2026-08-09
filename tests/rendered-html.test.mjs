@@ -25,18 +25,18 @@ test("server-renders the Hearthland product experience", async () => {
   assert.doesNotMatch(html, /Your site is taking shape|codex-preview|react-loading-skeleton/);
 });
 
-test("keeps the relational and matching foundations separate from UI", async () => {
+test("keeps the Supabase relational and matching foundations separate from UI", async () => {
   const [schema, matching, hosting, packageJson] = await Promise.all([
-    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../supabase/migrations/20260809143615_hearthland_t3_3_postgres_foundation.sql", import.meta.url), "utf8"),
     readFile(new URL("../app/matching.ts", import.meta.url), "utf8"),
     readFile(new URL("../.openai/hosting.json", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
-  assert.match(schema, /buildingCamps/);
-  assert.match(schema, /entityRelationships/);
-  assert.match(schema, /campApplications/);
+  assert.match(schema, /hearthland\.building_camps/);
+  assert.match(schema, /hearthland\.entity_relationships/);
+  assert.match(schema, /hearthland\.camp_applications/);
   assert.match(matching, /matchPersonToCommunity/);
   assert.match(matching, /matchLandToProject/);
-  assert.match(hosting, /"d1": "DB"/);
-  assert.doesNotMatch(packageJson, /react-loading-skeleton/);
+  assert.match(hosting, /"d1": null/);
+  assert.doesNotMatch(packageJson, /drizzle|react-loading-skeleton/);
 });

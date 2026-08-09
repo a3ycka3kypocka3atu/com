@@ -461,3 +461,22 @@ footer { display: grid; grid-template-columns: 2fr repeat(3, 1fr); gap: 5vw; pad
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+/* Supabase account flows */
+.state-page { display: grid; min-height: 78vh; place-content: center; justify-items: start; padding: 70px max(7vw, 24px); background: var(--paper); }.state-page h1 { max-width: 760px; margin: 12px 0 16px; font-family: var(--font-serif), serif; font-size: clamp(48px, 7vw, 84px); font-weight: 450; letter-spacing: -.055em; line-height: .98; }.state-page p { max-width: 580px; margin-bottom: 26px; color: var(--ink-faint); font-size: 14px; line-height: 1.65; }.state-page > div { display: flex; gap: 9px; }
+.auth-page { min-height: 100vh; padding: 32px max(4vw, 24px); background: linear-gradient(135deg, #1e3026 0 52%, var(--paper) 52%); }
+.auth-brand { display: inline-flex; align-items: center; gap: 10px; color: white; font-family: var(--font-serif), serif; font-size: 24px; font-weight: 600; }
+.auth-brand .brand-mark { border-color: white; }.auth-brand .brand-mark::before, .auth-brand .brand-mark::after, .auth-brand .brand-mark span { background: white; }
+.auth-panel { display: grid; width: min(1080px, 100%); min-height: 620px; grid-template-columns: 1fr 460px; margin: 55px auto 0; box-shadow: 0 35px 100px rgba(14,25,18,.28); }
+.auth-story { display: flex; flex-direction: column; justify-content: end; padding: 58px; color: white; background: radial-gradient(circle at 78% 24%, rgba(205,171,85,.24), transparent 28%), linear-gradient(155deg, #385342, #1f3428 72%); }
+.auth-story h1 { max-width: 600px; margin: 14px 0 20px; font-family: var(--font-serif), serif; font-size: clamp(46px, 5vw, 70px); font-weight: 450; letter-spacing: -.055em; line-height: .98; }
+.auth-story > p { max-width: 540px; color: #cbd6cc; font-size: 14px; line-height: 1.65; }
+.auth-loop { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 42px; color: #f1dfac; font-size: 10px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }.auth-loop i { color: #819085; font-style: normal; }
+.auth-form { display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 48px; background: var(--paper); }
+.auth-form h2 { margin-top: 8px; font-size: 34px; letter-spacing: -.045em; }
+.auth-form label { color: var(--ink-soft); font-size: 9px; font-weight: 750; }
+.auth-form input { display: block; width: 100%; height: 48px; margin-top: 7px; padding: 0 13px; border: 1px solid #c8c3b9; border-radius: 0; outline: 0; background: white; color: var(--ink); font: inherit; font-size: 12px; }.auth-form input:focus { border-color: var(--moss); box-shadow: 0 0 0 2px rgba(46,75,57,.12); }
+.form-message { margin: 0; padding: 11px 13px; font-size: 10px; line-height: 1.45; }.form-message.error { border: 1px solid #d7a18e; background: #fbede7; color: #7c3928; }.form-message.success { border: 1px solid #9eb29e; background: #e7efe5; color: #294b34; }
+.auth-link { align-self: flex-start; color: var(--moss); font-size: 10px; font-weight: 750; text-decoration: underline; text-underline-offset: 3px; }.auth-switch { margin: 5px 0 0; color: var(--ink-faint); font-size: 10px; text-align: center; }.auth-switch a { color: var(--moss); font-weight: 800; }
+@media (max-width: 820px) { .auth-page { background: var(--paper); }.auth-brand { color: var(--moss-dark); }.auth-brand .brand-mark { border-color: var(--moss-dark); }.auth-brand .brand-mark::before, .auth-brand .brand-mark::after, .auth-brand .brand-mark span { background: var(--moss-dark); }.auth-panel { grid-template-columns: 1fr; margin-top: 28px; box-shadow: none; }.auth-story { min-height: 340px; padding: 38px; }.auth-form { padding: 40px 28px; } }
+@media (max-width: 520px) { .auth-page { padding: 22px 16px; }.auth-story { min-height: 290px; padding: 28px 24px; }.auth-story h1 { font-size: 42px; }.auth-loop { margin-top: 28px; }.auth-form { padding: 34px 22px; } }

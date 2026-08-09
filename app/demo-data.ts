@@ -92,7 +92,7 @@ export const projects: Project[] = [
 
 export const opportunities: Opportunity[] = [
   { id: "o-farmer", slug: "permaculture-farmer-sunseed", title: "Permaculture farmer", parent: "Sunseed Valley", parentId: "c-sunseed", parentKind: "community", type: "Paid job", category: "Work", location: "Styria, Austria", country: "Austria", remote: false, compensation: "Paid + accommodation", accommodation: true, food: false, start: "September 2026", duration: "12+ months", deadline: "30 Aug 2026", skills: ["Permaculture", "Organic farming"], description: "Lead the community market garden with support from two residents and seasonal volunteers." },
-  { id: "o-electric", slug: "renewable-energy-cofounder-morava", title: "Renewable-energy co-founder", parent: "Morava Circle", parentId: "e-morava", parentKind: "emerging", type: "Founding member", category: "Join", location: "South Moravia, Czechia", country: "Czechia", remote: true, compensation: "Equity discussion", accommodation: false, food: false, start: "Now", duration: "Long term", deadline: "Open", skills: ["Electrical engineering", "Solar energy"], description: "Join the core team to shape resilient energy, utilities and land assessment." },
+  { id: "o-electric", slug: "renewable-energy-cofounder-morava", title: "Renewable-energy co-founder", parent: "Forest Community Bohemia", parentId: "e-morava", parentKind: "emerging", type: "Founding member", category: "Join", location: "South Bohemia, Czechia", country: "Czechia", remote: true, compensation: "Equity discussion", accommodation: false, food: false, start: "Now", duration: "Long term", deadline: "Open", skills: ["Electrical engineering", "Solar energy"], description: "Join the core team to shape resilient energy, utilities and land assessment." },
   { id: "o-teacher", slug: "bilingual-educator-danube", title: "Bilingual primary educator", parent: "Danube Learning Village", parentId: "e-danube", parentKind: "emerging", type: "Founding member", category: "Join", location: "Trnava, Slovakia", country: "Slovakia", remote: false, compensation: "Member role", accommodation: false, food: false, start: "January 2027", duration: "Long term", deadline: "15 Nov 2026", skills: ["Teaching", "Childcare"], description: "Help co-design a bilingual learning programme and join the founding family cohort." },
   { id: "o-builder", slug: "natural-builder-serra-viva", title: "Natural building lead", parent: "Serra Viva", parentId: "c-serra", parentKind: "community", type: "Contractor", category: "Expertise", location: "Alentejo, Portugal", country: "Portugal", remote: false, compensation: "Paid contract", accommodation: true, food: true, start: "October 2026", duration: "4 months", deadline: "10 Sep 2026", skills: ["Natural building", "Carpentry"], description: "Coordinate two small straw-clay homes and mentor the resident build crew." },
   { id: "o-health", slug: "community-health-steward-northlight", title: "Community health steward", parent: "Northlight Cooperative", parentId: "c-northlight", parentKind: "community", type: "Part-time work", category: "Work", location: "Skåne, Sweden", country: "Sweden", remote: false, compensation: "Paid part-time", accommodation: false, food: false, start: "November 2026", duration: "Ongoing", deadline: "20 Sep 2026", skills: ["Healthcare", "Community organising"], description: "Coordinate wellbeing initiatives, elder support and links to local health services." },
@@ -169,7 +169,7 @@ export const buildingCamps: BuildingCamp[] = [
     title: "Water & Earth Camp",
     parent: "Serra Viva",
     parentId: "c-serra",
-    projectId: "pr-atlas",
+    projectId: "",
     image: images.farm,
     location: "Alentejo, Portugal",
     country: "Portugal",
@@ -197,7 +197,7 @@ export const buildingCamps: BuildingCamp[] = [
     title: "Stone, Sauna & Greenhouse",
     parent: "Karst Commons",
     parentId: "c-karst",
-    projectId: "pr-adriatic",
+    projectId: "",
     image: images.mountain,
     location: "Primorska, Slovenia",
     country: "Slovenia",
