@@ -18,6 +18,11 @@ const INTENTIONS = new Set([
   "explore",
 ]);
 const EXPERIENCE_LEVELS = new Set(["curious", "beginner", "intermediate", "advanced", "expert"]);
+const TEACHING_MODES = new Set(["practical", "theoretical", "both"]);
+const TRAVEL_SCOPES = new Set(["local", "selected_countries", "europe", "international", "online"]);
+const PROFESSIONAL_ARRANGEMENTS = new Set(["volunteer", "expenses", "paid", "donation_based", "discuss"]);
+const TEACHING_TYPES = new Set(["practical", "theoretical", "both"]);
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -61,6 +66,71 @@ function cleanLinks(value: unknown) {
       return false;
     }
   });
+}
+
+function cleanTeachingProfile(value: unknown, skills: JsonRecord[]) {
+  if (!isRecord(value)) return undefined;
+
+  const isAvailable = value.isAvailable ?? value.is_available;
+  if (typeof isAvailable !== "boolean") {
+    throw new RequestError("Teaching availability must be true or false.");
+  }
+
+  const teachingMode = cleanString(value.teachingMode ?? value.teaching_mode, 24) || "both";
+  const travelScope = cleanString(value.travelScope ?? value.travel_scope, 24) || "local";
+  if (!TEACHING_MODES.has(teachingMode)) throw new RequestError("Choose a valid teaching format.");
+  if (!TRAVEL_SCOPES.has(travelScope)) throw new RequestError("Choose a valid teaching travel scope.");
+
+  const selectedCountries = cleanList(value.selectedCountries ?? value.selected_countries, 80, 120);
+  if (travelScope === "selected_countries" && selectedCountries.length === 0) {
+    throw new RequestError("Add at least one country for your teaching travel scope.");
+  }
+
+  const professionalArrangements = cleanList(
+    value.professionalArrangements ?? value.professional_arrangements,
+    5,
+    32,
+  );
+  if (professionalArrangements.some((item) => !PROFESSIONAL_ARRANGEMENTS.has(item))) {
+    throw new RequestError("Choose valid professional arrangements.");
+  }
+
+  const rawTopics = Array.isArray(value.topics) ? value.topics.slice(0, 100) : [];
+  const topics = rawTopics.map((item) => {
+    if (!isRecord(item)) throw new RequestError("Teaching topics are invalid.");
+    const learningTopicEntityId = cleanString(
+      item.learningTopicEntityId ?? item.learning_topic_entity_id,
+      64,
+    );
+    const teachingType = cleanString(item.teachingType ?? item.teaching_type, 24) || "both";
+    if (!UUID_PATTERN.test(learningTopicEntityId) || !TEACHING_TYPES.has(teachingType)) {
+      throw new RequestError("Teaching topics are invalid.");
+    }
+    return {
+      learning_topic_entity_id: learningTopicEntityId,
+      teaching_type: teachingType,
+      notes: cleanString(item.notes, 1000),
+    };
+  });
+
+  if (isAvailable && !skills.some((skill) => skill.can_teach === true)) {
+    throw new RequestError("Choose at least one skill you can teach before enabling teaching availability.");
+  }
+
+  return {
+    is_available: isAvailable,
+    teaching_bio: cleanString(value.teachingBio ?? value.teaching_bio, 5000),
+    teaching_mode: teachingMode,
+    travel_scope: travelScope,
+    selected_countries: selectedCountries,
+    travel_regions: cleanList(value.travelRegions ?? value.travel_regions, 80, 160),
+    languages: cleanList(value.languages, 40, 80),
+    availability: cleanString(value.availability, 160),
+    professional_arrangements: professionalArrangements,
+    arrangement_notes: cleanString(value.arrangementNotes ?? value.arrangement_notes, 2000),
+    portfolio_links: cleanLinks(value.portfolioLinks ?? value.portfolio_links),
+    topics,
+  };
 }
 
 function cleanInteger(value: unknown) {
@@ -156,7 +226,7 @@ async function loadSnapshot(
       .maybeSingle(),
     hearthland
       .from("person_skills")
-      .select("id, skill_id, experience_level, can_teach, willing_to_contribute")
+      .select("id, skill_id, experience_level, can_teach, practical_workshops, theoretical_sessions, willing_to_contribute")
       .eq("profile_entity_id", profileEntityId)
       .order("created_at", { ascending: true }),
     hearthland
@@ -276,6 +346,8 @@ async function loadSnapshot(
             category: catalog.category,
             experienceLevel: item.experience_level,
             canTeach: item.can_teach,
+            practicalWorkshops: item.practical_workshops,
+            theoreticalSessions: item.theoretical_sessions,
             willingToContribute: item.willing_to_contribute,
           }]
         : [];
@@ -324,6 +396,8 @@ function profileRpcPayload(body: JsonRecord, action: "onboarding" | "profile") {
       category: cleanString(value.category, 100) || "Other",
       experience_level: experienceLevel,
       can_teach: value.canTeach === true || value.can_teach === true,
+      practical_workshops: value.practicalWorkshops === true || value.practical_workshops === true,
+      theoretical_sessions: value.theoreticalSessions === true || value.theoretical_sessions === true,
       willing_to_contribute: value.willingToContribute !== false && value.willing_to_contribute !== false,
     }];
   });
@@ -378,6 +452,8 @@ function profileRpcPayload(body: JsonRecord, action: "onboarding" | "profile") {
     payload.skills = skills;
     payload.values = values;
     payload.publication_status = "published";
+    const teachingProfile = cleanTeachingProfile(body.teachingProfile ?? body.teaching_profile, skills);
+    if (teachingProfile) payload.teaching_profile = teachingProfile;
   }
   if (accountSettings) payload.account_settings = accountSettings;
 

@@ -56,6 +56,9 @@ export function AccountShell({
             <Link className={active === "settings" ? styles.activeNav : undefined} href="/settings" prefetch={false}>
               <span aria-hidden="true">03</span><span><strong>Account settings</strong><small>Privacy and preferences</small></span>
             </Link>
+            <Link href="/messages" prefetch={false}>
+              <span aria-hidden="true">04</span><span><strong>Messages</strong><small>Private conversations</small></span>
+            </Link>
           </nav>
 
           {active !== "onboarding" && (

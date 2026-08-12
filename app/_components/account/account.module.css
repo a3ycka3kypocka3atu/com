@@ -471,6 +471,42 @@
 .skillChecks { display: grid; min-width: 145px; gap: 8px; padding-bottom: 8px; }
 .checkLine { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 9px; }
 .checkLine input { accent-color: var(--account-moss); }
+.masterPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, .72fr);
+  gap: 22px 30px;
+  margin-bottom: 22px;
+  padding: 24px;
+  border: 1px solid #cbd5c8;
+  border-radius: 3px 28px 3px 3px;
+  background: linear-gradient(135deg, #edf2e9, #f9f6ef 72%);
+}
+.masterPanel h3,
+.teachingDetails h3 { margin: 0 0 7px; font-family: var(--font-serif), serif; font-size: 24px; font-weight: 500; letter-spacing: -.035em; }
+.masterPanel p,
+.teachingDetailsHead p { max-width: 650px; margin: 0; color: var(--ink-soft, #4f574f); font-size: 10px; line-height: 1.6; }
+.masterAvailability { display: flex; align-items: center; justify-content: space-between; gap: 18px; cursor: pointer; padding: 16px 18px; border: 1px solid #bdc9ba; background: rgba(255, 254, 250, .8); }
+.masterAvailability > span { min-width: 0; }
+.masterAvailability strong,
+.masterAvailability small { display: block; }
+.masterAvailability strong { margin-bottom: 4px; font-size: 10px; }
+.masterAvailability small { color: var(--ink-faint, #747b73); font-size: 9px; line-height: 1.45; }
+.masterAvailability input { position: absolute; opacity: 0; pointer-events: none; }
+.masterAvailability i { position: relative; width: 42px; height: 23px; flex: 0 0 auto; border-radius: 14px; background: #c5c6be; transition: background .16s ease; }
+.masterAvailability i::after { position: absolute; top: 3px; left: 3px; width: 17px; height: 17px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(0, 0, 0, .18); content: ""; transition: transform .16s ease; }
+.masterAvailability input:checked + i { background: var(--account-moss); }
+.masterAvailability input:checked + i::after { transform: translateX(19px); }
+.masterAvailability input:focus-visible + i { outline: 3px solid rgba(82, 107, 88, .22); outline-offset: 2px; }
+.masterSignals { display: grid; grid-column: 1 / -1; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; margin: 0; background: #d8ddd4; }
+.masterSignals div { min-width: 0; padding: 13px 14px; background: rgba(255, 254, 250, .88); }
+.masterSignals dt { margin-bottom: 5px; color: var(--ink-faint, #747b73); font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.masterSignals dd { margin: 0; overflow-wrap: anywhere; font-size: 10px; font-weight: 750; }
+.masterPrompt { grid-column: 1 / -1; padding: 10px 12px; border: 1px solid #dcb59c; background: #fff7ee; color: #764b36 !important; }
+.teachingDetails { display: grid; gap: 24px; margin-top: 22px; padding-top: 25px; border-top: 1px solid #e1dcd3; }
+.teachingDetailsHead { display: flex; align-items: end; justify-content: space-between; gap: 24px; }
+.teachingDetailsHead > span { flex: 0 0 auto; padding: 7px 10px; border-radius: 20px; background: #e8eee5; color: var(--account-forest); font-size: 8px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.teachingTopics { gap: 13px; padding-top: 22px; border-top: 1px solid #e1dcd3; }
+.topicTeachingGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 4px; padding: 16px; background: #f8f5ee; }
 .emptyState { padding: 27px; border: 1px dashed #cfc9bf; background: #fbf8f2; text-align: center; }
 .emptyState strong { display: block; margin-bottom: 4px; font-size: 12px; }
 .emptyState p { margin: 0; color: var(--ink-faint, #747b73); font-size: 10px; }
@@ -523,6 +559,8 @@
   .suggestionCard { min-height: auto; }
   .skillRow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .skillChecks { min-width: 0; }
+  .masterPanel { grid-template-columns: 1fr; }
+  .masterSignals { grid-column: auto; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 780px) {
@@ -569,6 +607,11 @@
   .avatarPanel { grid-template-columns: 82px minmax(0, 1fr); gap: 15px; padding: 19px; }
   .avatarPreview { width: 82px; height: 82px; }
   .skillRow { grid-template-columns: 1fr; }
+  .masterPanel { padding: 19px; }
+  .masterSignals,
+  .topicTeachingGrid { grid-template-columns: 1fr; }
+  .teachingDetailsHead { display: block; }
+  .teachingDetailsHead > span { display: inline-flex; margin-top: 12px; }
   .formActions { padding: 10px; }
   .formActions > div { width: 100%; }
   .formActions .primaryButton,

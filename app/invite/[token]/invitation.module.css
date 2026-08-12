@@ -1,0 +1,66 @@
+.page,
+.invalid { min-height: 100vh; background: #f6f2ea; color: #20241f; }
+
+.page > header {
+  display: flex;
+  min-height: 72px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 clamp(22px, 5vw, 68px);
+  border-bottom: 1px solid #ded8ce;
+}
+
+.brand { color: inherit; font-size: 20px; font-weight: 820; letter-spacing: -.045em; text-decoration: none; }
+.page > header > span { color: #667066; font-size: 9px; font-weight: 760; letter-spacing: .05em; }
+.invitation { display: grid; width: min(1220px, calc(100% - clamp(34px, 8vw, 112px))); grid-template-columns: minmax(0, 1.1fr) minmax(380px, .9fr); gap: clamp(48px, 7vw, 105px); align-items: center; margin: 0 auto; padding: clamp(55px, 8vw, 105px) 0 100px; }
+.eyebrow,
+.fact span,
+.card section > span { display: block; color: #59705c; font-size: 8px; font-weight: 850; letter-spacing: .16em; }
+.story h1 { max-width: 720px; margin: 15px 0 22px; font-family: Georgia, serif; font-size: clamp(52px, 7vw, 92px); font-weight: 450; letter-spacing: -.065em; line-height: .94; }
+.story > p { max-width: 620px; color: #5b635b; font-size: 15px; line-height: 1.65; }
+.story blockquote { margin: 29px 0 35px; padding-left: 22px; border-left: 3px solid #bd6544; color: #30483a; font-family: Georgia, serif; font-size: clamp(28px, 3vw, 43px); font-style: italic; line-height: 1.12; }
+.fact { display: inline-grid; gap: 7px; margin: 0 32px 18px 0; }
+.fact strong { font-size: 12px; text-transform: capitalize; }
+.card { overflow: hidden; border: 1px solid #d9d3c9; border-radius: 3px 42px 3px 3px; background: #fffdf9; box-shadow: 0 28px 80px rgba(32, 39, 32, .11); }
+.card > section { padding: 26px 29px; border-bottom: 1px solid #ebe6dd; }
+.card section p { margin: 10px 0 0; color: #4f584f; font-family: Georgia, serif; font-size: 17px; line-height: 1.6; }
+.authActions,
+.responseActions { display: grid; gap: 9px; padding: 29px; }
+.primary,
+.secondary,
+.textButton { display: inline-flex; min-height: 48px; align-items: center; justify-content: center; gap: 10px; padding: 10px 17px; border: 1px solid transparent; border-radius: 3px; font-size: 10px; font-weight: 800; text-decoration: none; }
+.primary { background: #bd6544; color: white; }
+.secondary { border-color: #cfc9bf; background: #fffefa; color: #293129; }
+.textButton { color: #834838; }
+.primary:disabled,
+.secondary:disabled,
+.textButton:disabled { cursor: wait; opacity: .62; }
+.authActions small { margin-top: 5px; color: #7c827b; font-size: 8px; line-height: 1.5; text-align: center; }
+.error { margin: 5px 0 0; color: #9a432f; font-size: 10px; text-align: center; }
+.complete { padding: 34px 29px; background: #e9efe7; color: #30483a; text-align: center; }
+.complete strong { font-family: Georgia, serif; font-size: 22px; font-weight: 480; }
+.complete p { margin: 7px 0 0; font-size: 10px; }
+.card footer { padding: 17px 29px; border-top: 1px solid #ebe6dd; color: #7d827d; font-size: 8px; line-height: 1.5; }
+.messageOrganiser { display: flex; min-height: 47px; align-items: center; justify-content: space-between; padding: 0 29px; border-top: 1px solid #ebe6dd; color: #30483a; font-size: 9px; font-weight: 850; text-decoration: none; }
+.messageOrganiser:hover { background: #f8f5ee; }
+.invalid { display: grid; align-content: start; padding: 28px clamp(24px, 5vw, 68px); }
+.invalid section { display: grid; max-width: 780px; min-height: calc(100vh - 100px); align-content: center; }
+.invalid section > span { color: #bd6544; font-size: 9px; font-weight: 850; letter-spacing: .16em; }
+.invalid h1 { margin: 15px 0; font-family: Georgia, serif; font-size: clamp(46px, 6vw, 78px); font-weight: 450; letter-spacing: -.06em; }
+.invalid p { max-width: 620px; margin: 0 0 25px; color: #626962; font-size: 14px; line-height: 1.7; }
+.invalid section a { color: #30483a; font-size: 11px; font-weight: 800; text-decoration: none; }
+
+@media (max-width: 850px) {
+  .page > header > span { display: none; }
+  .invitation { grid-template-columns: 1fr; gap: 35px; }
+}
+
+@media (max-width: 520px) {
+  .invitation { width: min(100% - 28px, 1220px); padding-top: 45px; }
+  .story h1 { font-size: 48px; }
+  .story blockquote { font-size: 27px; }
+  .card > section,
+  .authActions,
+  .responseActions { padding-right: 21px; padding-left: 21px; }
+  .messageOrganiser { padding-right: 21px; padding-left: 21px; }
+}

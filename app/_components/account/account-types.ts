@@ -12,16 +12,40 @@ export type IntentionKey =
   | "represent_organisation"
   | "explore";
 
+export const MASTER_AVAILABILITY_SIGNAL = "Available as Master / Teacher";
+
 export type SkillDraft = {
   id?: string;
   name: string;
   category: string;
   experienceLevel: "curious" | "beginner" | "intermediate" | "advanced" | "expert";
   canTeach: boolean;
+  practicalWorkshops: boolean;
+  theoreticalSessions: boolean;
   willingToContribute: boolean;
 };
 
+export type TeachingProfileDraft = {
+  isAvailable: boolean;
+  teachingBio: string;
+  teachingMode: "practical" | "theoretical" | "both";
+  travelScope: "local" | "selected_countries" | "europe" | "international" | "online";
+  selectedCountries: string[];
+  travelRegions: string[];
+  languages: string[];
+  availability: string;
+  professionalArrangements: Array<"volunteer" | "expenses" | "paid" | "donation_based" | "discuss">;
+  arrangementNotes: string;
+  portfolioLinks: string[];
+  topics: Array<{
+    learningTopicEntityId: string;
+    teachingType: "practical" | "theoretical" | "both";
+    notes: string;
+  }>;
+};
+
 export type ProfileDraft = {
+  entityId: string;
   slug: string;
   displayName: string;
   headline: string;
@@ -62,9 +86,26 @@ export type AccountSnapshot = {
   profile: ProfileDraft;
   intentions: IntentionKey[];
   skills: SkillDraft[];
+  teachingProfile: TeachingProfileDraft;
+};
+
+export const EMPTY_TEACHING_PROFILE: TeachingProfileDraft = {
+  isAvailable: false,
+  teachingBio: "",
+  teachingMode: "both",
+  travelScope: "local",
+  selectedCountries: [],
+  travelRegions: [],
+  languages: [],
+  availability: "",
+  professionalArrangements: [],
+  arrangementNotes: "",
+  portfolioLinks: [],
+  topics: [],
 };
 
 export const EMPTY_PROFILE: ProfileDraft = {
+  entityId: "",
   slug: "",
   displayName: "",
   headline: "",
@@ -129,6 +170,21 @@ function experienceValue(value: string): SkillDraft["experienceLevel"] {
     : "curious";
 }
 
+function teachingModeValue(value: string): TeachingProfileDraft["teachingMode"] {
+  return value === "practical" || value === "theoretical" ? value : "both";
+}
+
+function travelScopeValue(value: string): TeachingProfileDraft["travelScope"] {
+  return value === "selected_countries" || value === "europe" || value === "international" || value === "online"
+    ? value
+    : "local";
+}
+
+function professionalArrangements(value: unknown): TeachingProfileDraft["professionalArrangements"] {
+  const allowed = new Set(["volunteer", "expenses", "paid", "donation_based", "discuss"]);
+  return stringList(value).filter((item): item is TeachingProfileDraft["professionalArrangements"][number] => allowed.has(item));
+}
+
 function stringList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((item): item is string => typeof item === "string" && item.trim().length > 0);
@@ -152,6 +208,15 @@ export function normalizeAccountPayload(payload: unknown, fallbackId = "", fallb
   const root = isRecord(payloadRecord.data) ? payloadRecord.data : payloadRecord;
   const account = isRecord(root.account) ? root.account : {};
   const profile = isRecord(root.profile) ? root.profile : {};
+  const teachingProfile = isRecord(root.teachingProfile)
+    ? root.teachingProfile
+    : isRecord(root.teaching_profile)
+      ? root.teaching_profile
+      : isRecord(profile.teachingProfile)
+        ? profile.teachingProfile
+        : isRecord(profile.teaching_profile)
+          ? profile.teaching_profile
+          : {};
   const preferences = isRecord(profile.preferences)
     ? profile.preferences
     : isRecord(root.preferences)
@@ -185,6 +250,8 @@ export function normalizeAccountPayload(payload: unknown, fallbackId = "", fallb
       category: stringValue(skill, "category") || "Practical",
       experienceLevel: experienceValue(stringValue(skill, "experienceLevel", "experience_level")),
       canTeach: skill.canTeach === true || skill.can_teach === true,
+      practicalWorkshops: skill.practicalWorkshops === true || skill.practical_workshops === true,
+      theoreticalSessions: skill.theoreticalSessions === true || skill.theoretical_sessions === true,
       willingToContribute: skill.willingToContribute !== false && skill.willing_to_contribute !== false,
     }))
     .filter((skill) => skill.name.length > 0);
@@ -199,6 +266,7 @@ export function normalizeAccountPayload(payload: unknown, fallbackId = "", fallb
     },
     profile: {
       ...EMPTY_PROFILE,
+      entityId: stringValue(profile, "entityId", "entity_id"),
       slug: stringValue(profile, "slug"),
       displayName: stringValue(profile, "displayName", "display_name") || stringValue(account, "displayName", "display_name"),
       headline: stringValue(profile, "headline"),
@@ -244,6 +312,33 @@ export function normalizeAccountPayload(payload: unknown, fallbackId = "", fallb
     },
     intentions: stringList(root.intentions) as IntentionKey[],
     skills,
+    teachingProfile: {
+      ...EMPTY_TEACHING_PROFILE,
+      isAvailable: teachingProfile.isAvailable === true || teachingProfile.is_available === true,
+      teachingBio: stringValue(teachingProfile, "teachingBio", "teaching_bio"),
+      teachingMode: teachingModeValue(stringValue(teachingProfile, "teachingMode", "teaching_mode")),
+      travelScope: travelScopeValue(stringValue(teachingProfile, "travelScope", "travel_scope")),
+      selectedCountries: listFrom(teachingProfile, "selectedCountries", "selected_countries"),
+      travelRegions: listFrom(teachingProfile, "travelRegions", "travel_regions"),
+      languages: listFrom(teachingProfile, "languages"),
+      availability: stringValue(teachingProfile, "availability"),
+      professionalArrangements: professionalArrangements(
+        teachingProfile.professionalArrangements ?? teachingProfile.professional_arrangements,
+      ),
+      arrangementNotes: stringValue(teachingProfile, "arrangementNotes", "arrangement_notes"),
+      portfolioLinks: listFrom(teachingProfile, "portfolioLinks", "portfolio_links"),
+      topics: Array.isArray(teachingProfile.topics)
+        ? teachingProfile.topics.filter(isRecord).flatMap((topic) => {
+            const learningTopicEntityId = stringValue(topic, "learningTopicEntityId", "learning_topic_entity_id");
+            if (!learningTopicEntityId) return [];
+            return [{
+              learningTopicEntityId,
+              teachingType: teachingModeValue(stringValue(topic, "teachingType", "teaching_type")),
+              notes: stringValue(topic, "notes"),
+            }];
+          })
+        : [],
+    },
   };
 }
 
@@ -284,6 +379,10 @@ export function profileSuggestions(profile: ProfileDraft, skills: SkillDraft[]) 
   if (!profile.avatarPath && !profile.avatarUrl) suggestions.push("Add a profile photo");
   if (profile.bio.trim().length < 80) suggestions.push("Share a little more of your story");
   if (skills.length === 0) suggestions.push("Add at least one skill");
+  if (
+    profile.canContribute.includes(MASTER_AVAILABILITY_SIGNAL)
+    && !skills.some((skill) => skill.canTeach)
+  ) suggestions.push("Mark a skill you can teach");
   if (profile.lookingFor.length === 0) suggestions.push("Say what you are looking for");
   if (profile.preferredCountries.length + profile.preferredRegions.length === 0) suggestions.push("Add preferred regions");
   return suggestions.slice(0, 3);

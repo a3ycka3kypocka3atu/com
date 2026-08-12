@@ -18,9 +18,28 @@ export type PlatformNotification = {
   body: string;
   time: string;
   unread: boolean;
+  targetUrl?: string;
 };
 
+export function safeInternalTargetUrl(value: unknown) {
+  if (typeof value !== "string") return undefined;
+  const candidate = value.trim();
+  if (!candidate.startsWith("/") || candidate.startsWith("//") || candidate.includes("\\")) {
+    return undefined;
+  }
+  try {
+    const base = new URL("https://hearthland.internal");
+    const parsed = new URL(candidate, base);
+    if (parsed.origin !== base.origin) return undefined;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return undefined;
+  }
+}
+
 export type LearningTopic = {
+  id: string;
+  slug: string;
   category: string;
   title: string;
   description: string;

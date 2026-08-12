@@ -2,6 +2,21 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+export const TELEGRAM_AUTH_PROVIDER = "custom:telegram" as const;
+
+export const authProviderConfig = {
+  google: {
+    provider: "google" as const,
+    enabled: process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === "true",
+  },
+  telegram: {
+    provider: TELEGRAM_AUTH_PROVIDER,
+    enabled: process.env.NEXT_PUBLIC_AUTH_TELEGRAM_ENABLED === "true",
+  },
+} as const;
+
+export type SocialAuthProvider = keyof typeof authProviderConfig;
+
 export function getSupabaseConfig() {
   if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
     throw new Error(

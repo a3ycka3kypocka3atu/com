@@ -10,6 +10,13 @@ type ActionPayload = {
   reason?: unknown;
   roles?: unknown;
   message?: unknown;
+  skillsOffered?: unknown;
+  learningInterests?: unknown;
+  arrivalDate?: unknown;
+  departureDate?: unknown;
+  accommodationRequirement?: unknown;
+  resourcesOffered?: unknown;
+  futureCommunityInterest?: unknown;
 };
 
 type UiEntityType =
@@ -82,6 +89,19 @@ const INTEREST_TYPES: Record<string, "join" | "visit" | "volunteer" | "collabora
   other: "other",
 };
 
+const CAMP_ROLE_CODES: Record<string, string> = {
+  participant: "participant",
+  learner: "learner",
+  volunteer: "volunteer",
+  builder: "builder",
+  "master / teacher": "master_teacher",
+  master_teacher: "master_teacher",
+  specialist: "specialist",
+  "future resident": "future_resident",
+  future_resident: "future_resident",
+};
+const CAMP_FUTURE_COMMUNITY_INTERESTS = new Set(["interested", "maybe", "camp_only"]);
+
 function jsonError(message: string, status: number, code: string) {
   return Response.json({ error: message, code }, { status });
 }
@@ -144,6 +164,15 @@ function parseText(value: unknown, maxLength: number) {
   return normalized.length <= maxLength ? normalized : null;
 }
 
+function parseDate(value: unknown) {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T12:00:00Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value
+    ? value
+    : null;
+}
+
 function parseRoles(value: unknown) {
   if (value === undefined || value === null) return [];
   if (!Array.isArray(value) || value.length > 20) return null;
@@ -156,6 +185,25 @@ function parseRoles(value: unknown) {
     if (!roles.includes(role)) roles.push(role);
   }
   return roles;
+}
+
+function normalizeCampRoles(roles: string[]) {
+  const normalized: string[] = [];
+  for (const role of roles) {
+    const code = CAMP_ROLE_CODES[role.toLowerCase()];
+    if (!code) return null;
+    if (!normalized.includes(code)) normalized.push(code);
+  }
+  return normalized;
+}
+
+function availableCampRoleCodes(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.flatMap((role) => {
+    if (typeof role !== "string") return [];
+    const code = CAMP_ROLE_CODES[role.trim().toLowerCase()];
+    return code ? [code] : [];
+  })));
 }
 
 function mapInterestType(reason: string) {
@@ -398,20 +446,57 @@ export async function POST(request: Request) {
   }
 
   if (action === "camp_apply") {
+    const campRoles = normalizeCampRoles(roles);
+    if (campRoles === null || campRoles.length === 0) {
+      return jsonError("Choose a supported Camp role", 400, "INVALID_CAMP_ROLE");
+    }
+    const skillsOffered = parseText(payload.skillsOffered, 2_000);
+    const learningInterests = parseText(payload.learningInterests, 2_000);
+    const arrivalDate = parseDate(payload.arrivalDate);
+    const departureDate = parseDate(payload.departureDate);
+    const accommodationRequirement = parseText(payload.accommodationRequirement, 1_000);
+    const resourcesOffered = parseText(payload.resourcesOffered, 2_000);
+    const futureCommunityInterest = parseText(payload.futureCommunityInterest, 500);
+    if (
+      skillsOffered === null || learningInterests === null
+      || arrivalDate === null || departureDate === null
+      || accommodationRequirement === null || resourcesOffered === null
+      || futureCommunityInterest === null
+    ) {
+      return jsonError("One or more Camp application fields are invalid", 400, "INVALID_CAMP_FIELDS");
+    }
+    if (futureCommunityInterest && !CAMP_FUTURE_COMMUNITY_INTERESTS.has(futureCommunityInterest)) {
+      return jsonError("Choose a valid future-community interest", 400, "INVALID_CAMP_INTEREST");
+    }
+    if (arrivalDate && departureDate && departureDate < arrivalDate) {
+      return jsonError("Departure must be on or after arrival", 400, "INVALID_CAMP_DATES");
+    }
     const { data: camp, error: campError } = await supabase
       .schema("hearthland")
       .from("building_camps")
-      .select("camp_status, application_deadline")
+      .select("camp_status, application_deadline, start_date, end_date, roles_available")
       .eq("entity_id", entityId)
       .maybeSingle();
     if (campError) {
       reportDatabaseError("check camp", campError);
       return jsonError("Could not check this camp right now", 500, "CAMP_CHECK_FAILED");
     }
+    const today = new Date().toISOString().slice(0, 10);
     const deadlinePassed = typeof camp?.application_deadline === "string"
-      && camp.application_deadline < new Date().toISOString().slice(0, 10);
-    if (!camp || camp.camp_status !== "applications_open" || deadlinePassed) {
+      && camp.application_deadline < today;
+    const campEnded = typeof camp?.end_date === "string" && camp.end_date < today;
+    if (!camp || camp.camp_status !== "applications_open" || deadlinePassed || campEnded) {
       return jsonError("Applications are not open for this camp", 409, "CAMP_APPLICATIONS_CLOSED");
+    }
+    const availableRoles = availableCampRoleCodes(camp.roles_available);
+    if (availableRoles.length > 0 && campRoles.some((role) => !availableRoles.includes(role))) {
+      return jsonError("One or more selected Camp roles are no longer available", 409, "CAMP_ROLE_UNAVAILABLE");
+    }
+    if (
+      (arrivalDate && (arrivalDate < camp.start_date || arrivalDate > camp.end_date))
+      || (departureDate && (departureDate < camp.start_date || departureDate > camp.end_date))
+    ) {
+      return jsonError("Arrival and departure must be within the Camp dates", 400, "CAMP_DATES_OUTSIDE_WINDOW");
     }
 
     const { data: existing, error: existingError } = await supabase
@@ -438,8 +523,15 @@ export async function POST(request: Request) {
       .insert({
         camp_entity_id: entityId,
         applicant_account_id: userId,
-        selected_roles: roles,
+        selected_roles: campRoles,
         message,
+        skills_offered: skillsOffered,
+        learning_interests: learningInterests,
+        arrival_date: arrivalDate || null,
+        departure_date: departureDate || null,
+        accommodation_requirement: accommodationRequirement || null,
+        resources_offered: resourcesOffered,
+        future_community_interest: futureCommunityInterest || null,
         status: "new",
       });
     if (error && error.code !== "23505") {

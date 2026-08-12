@@ -2,6 +2,36 @@ export type EntityKind = "community" | "emerging" | "land" | "opportunity" | "pe
 
 export type Coordinates = { x: number; y: number };
 
+export type TeachableSkill = {
+  name: string;
+  category: string;
+  experienceLevel: "curious" | "beginner" | "intermediate" | "advanced" | "expert";
+  practicalWorkshops: boolean;
+  theoreticalSessions: boolean;
+};
+
+export type TeachingProfile = {
+  isAvailable: boolean;
+  bio: string;
+  teachingMode: "practical" | "theoretical" | "both";
+  formats: string[];
+  travelScope: "local" | "selected_countries" | "europe" | "international" | "online";
+  selectedCountries: string[];
+  travelRegions: string[];
+  languages: string[];
+  availability: string;
+  compensationPreference: string;
+  professionalArrangements: string[];
+  arrangementNotes: string;
+  portfolioLinks: string[];
+  skills: TeachableSkill[];
+  topics: Array<{
+    id: string;
+    title: string;
+    teachingType: "practical" | "theoretical" | "both";
+  }>;
+};
+
 export type Community = {
   id: string;
   slug: string;
@@ -63,6 +93,10 @@ export type Person = {
   availability: string;
   completeness: number;
   bio: string;
+  canContribute?: string[];
+  contributionNote?: string;
+  isMemberProfile?: boolean;
+  teaching?: TeachingProfile;
 };
 
 export type Land = {
@@ -134,6 +168,35 @@ export type Project = {
   requiredSkills: string[];
   availableSkills: string[];
   progress: Record<string, "not started" | "exploring" | "in progress" | "prepared" | "completed">;
+  description?: string;
+  currentPriorities?: string[];
+  milestones?: Array<{
+    id: string;
+    title: string;
+    description: string;
+    targetDate: string | null;
+    completedDate: string | null;
+    status: "future" | "active" | "completed" | "delayed";
+  }>;
+  updates?: Array<{
+    id: string;
+    title: string;
+    body: string;
+    publishedAt: string;
+  }>;
+  needs?: Array<{
+    id: string;
+    title: string;
+    category: string;
+    description: string;
+    urgency: string;
+  }>;
+  pilot?: {
+    status: "nominated" | "active" | "paused" | "completed";
+    cohort: string;
+    publicSummary: string;
+    launchedAt: string | null;
+  };
 };
 
 export type BuildingCamp = {
@@ -163,7 +226,24 @@ export type BuildingCamp = {
   contribution: string;
   teachers: Array<{ name: string; role: string; avatar: string; skills: string[] }>;
   schedule: Array<{ day: string; items: Array<{ time: string; title: string; type: string }> }>;
-  result?: { participants: number; teachers: number; built: string[]; next: string };
+  result?: {
+    participants: number;
+    masters: number;
+    workshops: number;
+    durationDays: number;
+    whatWeBuilt: string;
+    whatWeLearned: string;
+    mainResults: string;
+    whatHappensNext: string;
+    publishedAt: string;
+    structures: Array<{
+      id: string;
+      title: string;
+      description: string;
+      images: Array<{ url: string; alt: string }>;
+    }>;
+    images: Array<{ url: string; alt: string }>;
+  };
 };
 
 export type MatchResult = {

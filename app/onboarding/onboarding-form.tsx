@@ -14,11 +14,11 @@ const intentions: Array<{ key: IntentionKey; icon: string; title: string; body: 
   { key: "already_creating_community", icon: "↗", title: "Already creating", body: "Bring an active group or settlement journey here." },
   { key: "represent_existing_community", icon: "◎", title: "Represent a community", body: "Share an established place and welcome people." },
   { key: "have_land", icon: "⌁", title: "Offer land", body: "Connect land with thoughtful regenerative projects." },
-  { key: "teach_master", icon: "✣", title: "Teach or mentor", body: "Share practical mastery with projects and camps." },
-  { key: "volunteer", icon: "♡", title: "Volunteer", body: "Contribute time, care and practical energy." },
-  { key: "work", icon: "⚒", title: "Find meaningful work", body: "Join paid or collaborative opportunities." },
+  { key: "teach_master", icon: "✣", title: "Be a Master / Teacher", body: "Offer practical mastery, specialist knowledge or mentoring." },
+  { key: "volunteer", icon: "♡", title: "Volunteer or build", body: "Join camps and projects with time, care and practical energy." },
+  { key: "work", icon: "⚒", title: "Work or specialise", body: "Find paid work or bring professional expertise to a project." },
   { key: "support_invest", icon: "◇", title: "Support or invest", body: "Help viable projects cross important thresholds." },
-  { key: "learn", icon: "◌", title: "Learn by doing", body: "Find camps, teachers and living knowledge." },
+  { key: "learn", icon: "◌", title: "Join a camp and learn", body: "Learn by doing alongside teachers, builders and future residents." },
   { key: "represent_organisation", icon: "▦", title: "Represent an organisation", body: "Offer services, partnerships or resources." },
   { key: "explore", icon: "→", title: "Explore first", body: "See what is forming before choosing a path." },
 ];
@@ -130,8 +130,14 @@ export default function OnboardingForm({ user, destination }: Props) {
         }),
       });
       await readAccountResponse(response);
-      setNotice("Your Hearthland journey is ready. Taking you to your dashboard…");
-      window.setTimeout(() => window.location.assign(destination), 700);
+      const teachingSetup = selected.includes("teach_master");
+      const nextDestination = teachingSetup
+        ? `/settings/profile?focus=teaching&next=${encodeURIComponent(destination)}`
+        : destination;
+      setNotice(teachingSetup
+        ? "Your first steps are saved. Next, add the skills you can teach."
+        : "Your Hearthland journey is ready. Taking you to your dashboard…");
+      window.setTimeout(() => window.location.assign(nextDestination), 700);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "We could not save your onboarding.");
     } finally {

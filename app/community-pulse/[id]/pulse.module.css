@@ -1,0 +1,47 @@
+.page { min-height: 100vh; background: #ede9df; color: #283a30; }
+.page > header { display: flex; height: 70px; align-items: center; justify-content: space-between; padding: 0 clamp(20px, 5vw, 76px); border-bottom: 1px solid #d3cec3; }
+.page > header a { color: #283a30; font-family: Georgia, serif; font-size: 23px; text-decoration: none; }
+.page > header span { color: #69736c; font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+.layout { display: grid; grid-template-columns: minmax(300px, .85fr) minmax(430px, 1.15fr); gap: clamp(35px, 7vw, 100px); max-width: 1260px; margin: auto; padding: clamp(50px, 8vw, 105px) clamp(20px, 5vw, 70px) 90px; }
+.intro > span,
+.formHead > span,
+.closed > span,
+.thanks > span { color: #b85e40; font-size: 9px; font-weight: 850; letter-spacing: .16em; }
+.intro h1 { margin: 16px 0 8px; font-family: Georgia, serif; font-size: clamp(44px, 6vw, 76px); font-weight: 450; letter-spacing: -.05em; line-height: .97; }
+.intro > p { color: #68736c; }
+.intro blockquote { margin: 50px 0 30px; padding-left: 22px; border-left: 2px solid #b85e40; font-family: Georgia, serif; font-size: 22px; line-height: 1.35; }
+.privacy { margin: 30px 0; padding: 20px; border: 1px solid #d3d8cf; background: #f8faf4; }
+.privacy strong { font-size: 12px; }
+.privacy p { margin: 7px 0 0; color: #6c766f; font-size: 10px; line-height: 1.6; }
+.intro > a { color: #304d3d; font-size: 10px; font-weight: 800; text-decoration: none; }
+.card { align-self: start; border: 1px solid #d7d1c6; background: #fffdf9; box-shadow: 0 28px 90px rgba(38,44,38,.08); }
+.formHead { padding: 28px 30px 22px; border-bottom: 1px solid #e5e1d9; }
+.formHead h2,
+.closed h2,
+.thanks h2 { margin: 9px 0; font-family: Georgia, serif; font-size: 27px; font-weight: 450; }
+.formHead p,
+.closed p,
+.thanks p { margin: 0; color: #747d76; font-size: 10px; line-height: 1.55; }
+.form fieldset { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; margin: 0; padding: 18px 30px; border: 0; border-bottom: 1px solid #eeeae3; }
+.form legend { display: contents; }
+.form legend strong,
+.form legend small { display: block; }
+.form legend strong { font-size: 11px; }
+.form legend small { margin-top: 4px; color: #7a817b; font-size: 9px; }
+.form fieldset > div { display: flex; gap: 5px; }
+.form fieldset label { cursor: pointer; }
+.form fieldset input { position: absolute; opacity: 0; pointer-events: none; }
+.form fieldset label span { display: grid; width: 32px; height: 32px; place-items: center; border: 1px solid #d6dbd3; border-radius: 50%; color: #67736a; font-size: 10px; font-weight: 800; }
+.form fieldset input:checked + span { border-color: #304d3d; background: #304d3d; color: white; }
+.form fieldset input:focus-visible + span { outline: 2px solid #b85e40; outline-offset: 2px; }
+.comment { display: grid; gap: 7px; padding: 23px 30px; }
+.comment > span { color: #5b675f; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+.comment textarea { border: 1px solid #d7dcd4; background: #fafbf7; color: #283a30; font: inherit; font-size: 11px; padding: 12px; resize: vertical; }
+.comment small { color: #848a84; font-size: 8px; }
+.form > button { width: calc(100% - 60px); margin: 0 30px 30px; border: 0; border-radius: 2px; background: #304d3d; color: white; cursor: pointer; font: inherit; font-size: 10px; font-weight: 800; padding: 15px; }
+.form > button:disabled { cursor: wait; opacity: .65; }
+.error { margin: 0 30px 16px; color: #9b4937; font-size: 10px; }
+.closed,
+.thanks { padding: 55px 40px; }
+@media (max-width: 840px) { .layout { grid-template-columns: 1fr; } .intro blockquote { margin-top: 30px; } }
+@media (max-width: 560px) { .page > header span { display: none; } .layout { padding-top: 38px; } .form fieldset { grid-template-columns: 1fr; } .form fieldset > div { justify-content: space-between; } .form fieldset label span { width: 38px; height: 38px; } }
