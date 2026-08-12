@@ -7,15 +7,19 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "dev": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
-    "build": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
-    "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
-    "test": "pnpm run build && node --test tests/*.test.mjs",
+    "dev": "next dev",
+    "build": "next build --webpack",
+    "start": "next start",
+    "dev:sites": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext dev",
+    "build:sites": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext build",
+    "start:sites": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
+    "test": "pnpm run build:sites && node --test tests/*.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",
     "@supabase/supabase-js": "2.112.2",
+    "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6"
   },

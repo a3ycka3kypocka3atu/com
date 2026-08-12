@@ -7,6 +7,8 @@ import "./globals.css";
 const sans = DM_Sans({ variable: "--font-sans", subsets: ["latin"] });
 const serif = Lora({ variable: "--font-serif", subsets: ["latin"] });
 
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
