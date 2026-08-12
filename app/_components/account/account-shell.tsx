@@ -1,11 +1,12 @@
 import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
+import { identitySummary } from "../../../lib/supabase/identity";
 import styles from "./account.module.css";
 
 type AccountSection = "onboarding" | "profile" | "settings";
 
-function initials(name: string, email: string) {
-  const source = name.trim() || email.split("@")[0] || "H";
+function initials(name: string, email: string | null) {
+  const source = name.trim() || email?.split("@")[0] || "H";
   return source
     .split(/[\s._-]+/)
     .slice(0, 2)
@@ -16,12 +17,14 @@ function initials(name: string, email: string) {
 export function AccountShell({
   active,
   email,
+  provider,
   name,
   completeness = 0,
   children,
 }: {
   active: AccountSection;
-  email: string;
+  email: string | null;
+  provider: string | null;
   name: string;
   completeness?: number;
   children: ReactNode;
@@ -42,7 +45,7 @@ export function AccountShell({
             <span className={styles.avatarFallback} aria-hidden="true">{initials(name, email)}</span>
             <div>
               <strong>{name || "Your Hearthland profile"}</strong>
-              <small>{email}</small>
+              <small>{identitySummary(email, provider)}</small>
             </div>
           </div>
 

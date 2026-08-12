@@ -3,14 +3,28 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 async function render(pathname = "/") {
+  const fixtureEnvironment = "HEARTHLAND_TEST_PUBLIC_FIXTURE";
+  const previousFixtureEnvironment = process.env[fixtureEnvironment];
+  process.env[fixtureEnvironment] = "true";
+
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
-  return worker.fetch(
-    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
-    { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
-    { waitUntil() {}, passThroughOnException() {} },
-  );
+  try {
+    const { default: worker } = await import(workerUrl.href);
+    const response = await worker.fetch(
+      new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
+      { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
+      { waitUntil() {}, passThroughOnException() {} },
+    );
+    const body = await response.arrayBuffer();
+    return new Response(body, response);
+  } finally {
+    if (previousFixtureEnvironment === undefined) {
+      delete process.env[fixtureEnvironment];
+    } else {
+      process.env[fixtureEnvironment] = previousFixtureEnvironment;
+    }
+  }
 }
 
 test("server-renders the Hearthland product experience", async () => {
@@ -22,6 +36,7 @@ test("server-renders the Hearthland product experience", async () => {
   assert.match(html, /Create places where people can/);
   assert.match(html, /Building Camp/);
   assert.match(html, /Forest Community Bohemia/);
+  assert.doesNotMatch(html, /SOMETHING WENT WRONG|We couldn’t load this part/);
   assert.doesNotMatch(html, /Your site is taking shape|codex-preview|react-loading-skeleton/);
 });
 

@@ -41,5 +41,5 @@ export default async function ManagePage({
   const user = await getCurrentUser();
   if (!user) redirect(`/auth/sign-in?next=${encodeURIComponent(destination)}`);
 
-  return <InvitationManager email={user.email ?? ""} initialSearch={initialSearch} initialCategory={initialCategory} initialDirection={initialDirection} />;
+  return <InvitationManager email={user.email} provider={user.provider} initialSearch={initialSearch} initialCategory={initialCategory} initialDirection={initialDirection} />;
 }

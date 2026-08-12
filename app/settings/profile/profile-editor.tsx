@@ -16,8 +16,9 @@ import {
   type TeachingProfileDraft,
 } from "../../_components/account/account-types";
 import { createClient } from "../../../lib/supabase/browser";
+import type { HearthlandAuthUser } from "../../../lib/supabase/identity";
 
-type Props = { user: { id: string; email: string | null } };
+type Props = { user: HearthlandAuthUser };
 
 const communityTypes = ["Intentional community", "Ecovillage", "Co-housing", "Family village", "Learning centre", "Regenerative farm"];
 const lifestyleOptions = ["Natural building", "Permaculture", "Shared meals", "Family life", "Creative practice", "Local economy", "Low-impact living", "Education"];
@@ -159,16 +160,16 @@ async function loadTeachingDetails(
 
 function fallbackSnapshot(user: Props["user"]): AccountSnapshot {
   return {
-    account: { id: user.id, email: user.email ?? "", displayName: "", onboardingStatus: "not_started", settings: {} },
-    profile: { ...EMPTY_PROFILE, displayName: (user.email ?? "").split("@")[0] },
+    account: { id: user.id, email: user.email, provider: user.provider, displayName: "", onboardingStatus: "not_started", settings: {} },
+    profile: { ...EMPTY_PROFILE, displayName: user.email?.split("@")[0] || "" },
     intentions: [],
     skills: [],
     teachingProfile: { ...EMPTY_TEACHING_PROFILE },
   };
 }
 
-function initials(name: string, email: string) {
-  const source = name.trim() || email.split("@")[0] || "H";
+function initials(name: string, email: string | null) {
+  const source = name.trim() || email?.split("@")[0] || "H";
   return source.split(/[\s._-]+/).slice(0, 2).map((part) => part.charAt(0).toUpperCase()).join("");
 }
 
@@ -213,7 +214,7 @@ function TagEditor({
 }
 
 export default function ProfileEditor({ user }: Props) {
-  const email = user.email ?? "";
+  const email = user.email;
   const [snapshot, setSnapshot] = useState<AccountSnapshot | null>(null);
   const [profile, setProfile] = useState<ProfileDraft>({ ...EMPTY_PROFILE });
   const [skills, setSkills] = useState<SkillDraft[]>([]);
@@ -233,7 +234,7 @@ export default function ProfileEditor({ user }: Props) {
       try {
         const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin", signal: controller.signal });
         const payload = await readAccountResponse(response);
-        const next = normalizeAccountPayload(payload, user.id, email);
+        const next = normalizeAccountPayload(payload, user.id, email, user.provider);
         const fallbackTeaching = {
           ...next.teachingProfile,
           isAvailable: next.teachingProfile.isAvailable || next.profile.canContribute.includes(MASTER_AVAILABILITY_SIGNAL),
@@ -458,7 +459,7 @@ export default function ProfileEditor({ user }: Props) {
         }),
       });
       const payload = await readAccountResponse(response);
-      const returned = normalizeAccountPayload(payload, user.id, email);
+      const returned = normalizeAccountPayload(payload, user.id, email, user.provider);
       const savedProfile = returned.profile.displayName ? { ...profilePayload, ...returned.profile, communitySizeMin: String(returned.profile.communitySizeMin || profile.communitySizeMin), communitySizeMax: String(returned.profile.communitySizeMax || profile.communitySizeMax) } as ProfileDraft : { ...profile, avatarPath, avatarUrl, profileCompleteness: completeness };
       const savedSkills = cleanSkills;
       setProfile(savedProfile);
@@ -504,7 +505,7 @@ export default function ProfileEditor({ user }: Props) {
   }
 
   return (
-    <AccountShell active="profile" email={email} name={profile.displayName} completeness={completeness}>
+    <AccountShell active="profile" email={email} provider={user.provider} name={profile.displayName} completeness={completeness}>
       {!snapshot ? <LoadingPanel label="Gathering your profile…" /> : (
         <form onSubmit={save}>
           <header className={styles.pageHeader}>

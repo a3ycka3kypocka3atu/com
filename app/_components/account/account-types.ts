@@ -78,7 +78,8 @@ export type ProfileDraft = {
 export type AccountSnapshot = {
   account: {
     id: string;
-    email: string;
+    email: string | null;
+    provider: string | null;
     displayName: string;
     onboardingStatus: string;
     settings: Record<string, unknown>;
@@ -203,7 +204,12 @@ function privacyValue(value: string, fallback: ProfileDraft["profileVisibility"]
     : fallback;
 }
 
-export function normalizeAccountPayload(payload: unknown, fallbackId = "", fallbackEmail = ""): AccountSnapshot {
+export function normalizeAccountPayload(
+  payload: unknown,
+  fallbackId = "",
+  fallbackEmail: string | null = null,
+  fallbackProvider: string | null = null,
+): AccountSnapshot {
   const payloadRecord = isRecord(payload) ? payload : {};
   const root = isRecord(payloadRecord.data) ? payloadRecord.data : payloadRecord;
   const account = isRecord(root.account) ? root.account : {};
@@ -260,6 +266,7 @@ export function normalizeAccountPayload(payload: unknown, fallbackId = "", fallb
     account: {
       id: stringValue(account, "id") || fallbackId,
       email: stringValue(account, "email") || fallbackEmail,
+      provider: stringValue(account, "provider") || fallbackProvider,
       displayName: stringValue(account, "displayName", "display_name"),
       onboardingStatus: stringValue(account, "onboardingStatus", "onboarding_status") || "not_started",
       settings: isRecord(account.settings) ? account.settings : {},

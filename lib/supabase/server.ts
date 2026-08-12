@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { getSupabaseConfig } from "./config";
+import { authEmail, authProvider, type HearthlandAuthUser } from "./identity";
 
 export async function createClient() {
   const cookieStore = await cookies();
@@ -26,13 +27,14 @@ export async function createClient() {
   });
 }
 
-export async function getCurrentUser() {
+export async function getCurrentUser(): Promise<HearthlandAuthUser | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims?.sub) return null;
 
   return {
     id: data.claims.sub,
-    email: typeof data.claims.email === "string" ? data.claims.email : null,
+    email: authEmail(data.claims.email),
+    provider: authProvider(data.claims.app_metadata?.provider),
   };
 }

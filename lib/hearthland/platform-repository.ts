@@ -1,5 +1,6 @@
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "../supabase/server";
+import { authEmail } from "../supabase/identity";
 import {
   safeInternalTargetUrl,
   type DashboardTask,
@@ -243,6 +244,10 @@ export class PlatformRepositoryError extends Error {
  * `hearthland.entities` query and metadata-to-DTO conversion.
  */
 export async function loadPlatformData(): Promise<PlatformData> {
+  if (hasRenderedFixtureTestEnvironment()) {
+    return loadPreviewFixture();
+  }
+
   if (!hasSupabaseEnvironment()) {
     return loadDevelopmentFallback(
       new PlatformRepositoryError("Supabase environment variables are missing."),
@@ -255,10 +260,13 @@ export async function loadPlatformData(): Promise<PlatformData> {
     const user = claimsResult.data?.claims?.sub
       ? ({
           id: claimsResult.data.claims.sub,
-          email:
-            typeof claimsResult.data.claims.email === "string"
-              ? claimsResult.data.claims.email
-              : undefined,
+          email: authEmail(claimsResult.data.claims.email) ?? undefined,
+          app_metadata: isJsonObject(claimsResult.data.claims.app_metadata)
+            ? claimsResult.data.claims.app_metadata
+            : {},
+          user_metadata: isJsonObject(claimsResult.data.claims.user_metadata)
+            ? claimsResult.data.claims.user_metadata
+            : {},
         } as User)
       : null;
 
@@ -1195,11 +1203,19 @@ function entityOrder(row: EntityRow) {
 }
 
 function createPreOnboardingPerson(user: User): Person {
-  const email = user.email ?? "new-member@hearthland.local";
-  const name = stringValue(
-    isJsonObject(user.user_metadata) ? user.user_metadata.display_name : null,
-    email.split("@")[0] || "New member",
-  );
+  const metadata = isJsonObject(user.user_metadata) ? user.user_metadata : {};
+  const givenName = stringValue(metadata.given_name, "");
+  const familyName = stringValue(metadata.family_name, "");
+  const combinedName = [givenName, familyName].filter(Boolean).join(" ");
+  const emailName = user.email?.split("@")[0] ?? "";
+  const name = [
+    metadata.display_name,
+    metadata.full_name,
+    metadata.name,
+    combinedName,
+    metadata.preferred_username,
+    emailName,
+  ].map((value) => stringValue(value, "")).find(Boolean) ?? "New member";
   return {
     id: user.id,
     slug: "new-member",
@@ -1244,6 +1260,12 @@ function hasSupabaseEnvironment() {
   );
 }
 
+function hasRenderedFixtureTestEnvironment() {
+  // The explicit fixture flag alone must never unlock demo data in production.
+  return process.env.HEARTHLAND_TEST_PUBLIC_FIXTURE === "true" &&
+    ["child-v8", "child-process"].includes(process.env.NODE_TEST_CONTEXT ?? "");
+}
+
 async function loadDevelopmentFallback(error: unknown): Promise<PlatformData> {
   if (process.env.NODE_ENV === "production") {
     if (error instanceof PlatformRepositoryError) throw error;
@@ -1256,6 +1278,10 @@ async function loadDevelopmentFallback(error: unknown): Promise<PlatformData> {
   console.warn(
     `[hearthland] Supabase repository unavailable in development; using the isolated preview fixture. ${message}`,
   );
+  return loadPreviewFixture();
+}
+
+async function loadPreviewFixture(): Promise<PlatformData> {
   const fixture = await import("../../app/demo-data");
   const previewTeachingSkills: Record<string, string[]> = {
     "mira-novak": ["Facilitation"],

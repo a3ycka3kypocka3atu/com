@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { identitySummary } from "../../lib/supabase/identity";
 import styles from "./manage.module.css";
 
 type Entity = {
@@ -115,11 +116,13 @@ function operationsPath(entity: Entity) {
 
 export default function InvitationManager({
   email,
+  provider,
   initialSearch,
   initialCategory,
   initialDirection,
 }: {
-  email: string;
+  email: string | null;
+  provider: string | null;
   initialSearch: string;
   initialCategory: string;
   initialDirection: "sent" | "received";
@@ -367,7 +370,7 @@ export default function InvitationManager({
         </div>
         <aside>
           <small>SIGNED IN AS</small>
-          <strong>{email || "Hearthland organiser"}</strong>
+          <strong>{identitySummary(email, provider)}</strong>
           <span>{entities.length} place{entities.length === 1 ? "" : "s"} available to manage</span>
         </aside>
       </section>

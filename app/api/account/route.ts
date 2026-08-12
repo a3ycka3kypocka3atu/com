@@ -1,4 +1,9 @@
 import { createClient } from "../../../lib/supabase/server";
+import {
+  authEmail,
+  authProvider,
+  type HearthlandAuthUser,
+} from "../../../lib/supabase/identity";
 
 const SCHEMA = "hearthland";
 const AVATAR_BUCKET = "hearthland-avatars";
@@ -159,14 +164,15 @@ async function authenticatedClient() {
     supabase,
     user: {
       id,
-      email: typeof data?.claims?.email === "string" ? data.claims.email : "",
+      email: authEmail(data?.claims?.email),
+      provider: authProvider(data?.claims?.app_metadata?.provider),
     },
   };
 }
 
 async function loadSnapshot(
   supabase: Awaited<ReturnType<typeof createClient>>,
-  user: { id: string; email: string },
+  user: HearthlandAuthUser,
 ) {
   const hearthland = supabase.schema(SCHEMA);
   const [accountResult, profileResult, intentionsResult, notificationPreferencesResult] = await Promise.all([
@@ -285,11 +291,13 @@ async function loadSnapshot(
     : {};
   const notificationPreferences = notificationPreferencesResult.data;
   const accountSettings = isRecord(account.settings) ? account.settings : {};
+  const accountEmail = authEmail(account.email) ?? user.email;
 
   return {
     account: {
       id: account.id,
-      email: account.email || user.email,
+      email: accountEmail,
+      provider: user.provider,
       displayName: account.display_name,
       onboardingStatus: account.onboarding_status,
       settings: {
@@ -298,7 +306,7 @@ async function loadSnapshot(
           messages: notificationPreferences?.message_notifications ?? true,
           projectUpdates: notificationPreferences?.project_update_notifications ?? true,
           campReminders: notificationPreferences?.upcoming_camp_notifications ?? true,
-          emailEnabled: notificationPreferences?.email_enabled ?? true,
+          emailEnabled: Boolean(accountEmail) && (notificationPreferences?.email_enabled ?? true),
         },
       },
     },
@@ -514,7 +522,7 @@ export async function POST(request: Request) {
           message_notifications: preferences.messages,
           project_update_notifications: preferences.projectUpdates,
           upcoming_camp_notifications: preferences.campReminders,
-          email_enabled: preferences.emailEnabled,
+          email_enabled: Boolean(user.email) && preferences.emailEnabled,
           updated_at: new Date().toISOString(),
         }, { onConflict: "account_id" });
       if (notificationError) throw new RequestError(notificationError.message, 422);

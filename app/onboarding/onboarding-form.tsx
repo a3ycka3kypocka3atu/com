@@ -7,6 +7,7 @@ import {
   readAccountResponse,
   type IntentionKey,
 } from "../_components/account/account-types";
+import type { HearthlandAuthUser } from "../../lib/supabase/identity";
 
 const intentions: Array<{ key: IntentionKey; icon: string; title: string; body: string }> = [
   { key: "find_community", icon: "⌂", title: "Find a community", body: "Discover a place and people that fit your life." },
@@ -27,12 +28,12 @@ const communityTypes = ["Intentional community", "Ecovillage", "Co-housing", "Fa
 const lifestyleOptions = ["Natural building", "Permaculture", "Shared meals", "Family life", "Creative practice", "Local economy", "Low-impact living", "Education"];
 
 type Props = {
-  user: { id: string; email: string | null };
+  user: HearthlandAuthUser;
   destination: string;
 };
 
 export default function OnboardingForm({ user, destination }: Props) {
-  const email = user.email ?? "";
+  const email = user.email;
   const [loading, setLoading] = useState(true);
   const [step, setStep] = useState(0);
   const [selected, setSelected] = useState<IntentionKey[]>([]);
@@ -55,9 +56,9 @@ export default function OnboardingForm({ user, destination }: Props) {
       try {
         const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin", signal: controller.signal });
         const payload = await readAccountResponse(response);
-        const snapshot = normalizeAccountPayload(payload, user.id, email);
+        const snapshot = normalizeAccountPayload(payload, user.id, email, user.provider);
         setSelected(snapshot.intentions);
-        setDisplayName(snapshot.profile.displayName || snapshot.account.displayName || email.split("@")[0]);
+        setDisplayName(snapshot.profile.displayName || snapshot.account.displayName || email?.split("@")[0] || "");
         setHeadline(snapshot.profile.headline);
         setCountry(snapshot.profile.country);
         setRegion(snapshot.profile.region);
@@ -69,14 +70,14 @@ export default function OnboardingForm({ user, destination }: Props) {
       } catch (caught) {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
         setError(caught instanceof Error ? caught.message : "We could not load your account.");
-        setDisplayName(email.split("@")[0]);
+        setDisplayName(email?.split("@")[0] || "");
       } finally {
         setLoading(false);
       }
     }
     void load();
     return () => controller.abort();
-  }, [email, user.id]);
+  }, [email, user.id, user.provider]);
 
   function toggleIntention(key: IntentionKey) {
     setSelected((current) => current.includes(key) ? current.filter((item) => item !== key) : [...current, key]);
@@ -146,7 +147,7 @@ export default function OnboardingForm({ user, destination }: Props) {
   }
 
   return (
-    <AccountShell active="onboarding" email={email} name={displayName}>
+    <AccountShell active="onboarding" email={email} provider={user.provider} name={displayName}>
       {loading ? <LoadingPanel label="Preparing your first steps…" /> : (
         <>
           <section className={styles.heroPanel}>

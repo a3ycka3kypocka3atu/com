@@ -10,8 +10,13 @@ import {
   type AccountSnapshot,
   type ProfileDraft,
 } from "../_components/account/account-types";
+import {
+  authProviderName,
+  identitySummary,
+  type HearthlandAuthUser,
+} from "../../lib/supabase/identity";
 
-type Props = { user: { id: string; email: string | null } };
+type Props = { user: HearthlandAuthUser };
 
 type NotificationSettings = {
   messages: boolean;
@@ -29,9 +34,9 @@ function bool(source: Record<string, unknown>, key: string, fallback: boolean) {
 }
 
 export default function SettingsClient({ user }: Props) {
-  const email = user.email ?? "";
+  const email = user.email;
   const [snapshot, setSnapshot] = useState<AccountSnapshot | null>(null);
-  const [notifications, setNotifications] = useState<NotificationSettings>({ messages: true, projectUpdates: true, campReminders: true, emailEnabled: true });
+  const [notifications, setNotifications] = useState<NotificationSettings>({ messages: true, projectUpdates: true, campReminders: true, emailEnabled: Boolean(email) });
   const [profileVisibility, setProfileVisibility] = useState<ProfileDraft["profileVisibility"]>("public");
   const [discoverable, setDiscoverable] = useState(true);
   const [allowConnectionRequests, setAllowConnectionRequests] = useState(true);
@@ -45,7 +50,7 @@ export default function SettingsClient({ user }: Props) {
       try {
         const response = await fetch("/api/account", { cache: "no-store", credentials: "same-origin", signal: controller.signal });
         const payload = await readAccountResponse(response);
-        const next = normalizeAccountPayload(payload, user.id, email);
+        const next = normalizeAccountPayload(payload, user.id, email, user.provider);
         setSnapshot(next);
         setProfileVisibility(next.profile.profileVisibility);
         const settings = next.account.settings;
@@ -55,19 +60,19 @@ export default function SettingsClient({ user }: Props) {
           messages: bool(notificationSource, "messages", true),
           projectUpdates: bool(notificationSource, "projectUpdates", true),
           campReminders: bool(notificationSource, "campReminders", true),
-          emailEnabled: bool(notificationSource, "emailEnabled", true),
+          emailEnabled: Boolean(next.account.email) && bool(notificationSource, "emailEnabled", true),
         });
         setDiscoverable(bool(privacySource, "discoverable", true));
         setAllowConnectionRequests(bool(privacySource, "allowConnectionRequests", true));
       } catch (caught) {
         if (caught instanceof DOMException && caught.name === "AbortError") return;
-        setSnapshot(normalizeAccountPayload({}, user.id, email));
+        setSnapshot(normalizeAccountPayload({}, user.id, email, user.provider));
         setError(caught instanceof Error ? caught.message : "We could not load your settings.");
       }
     }
     void load();
     return () => controller.abort();
-  }, [email, user.id]);
+  }, [email, user.id, user.provider]);
 
   async function saveSettings(extraSettings: Record<string, unknown> = {}) {
     if (!snapshot || saving) return;
@@ -96,10 +101,19 @@ export default function SettingsClient({ user }: Props) {
         method: "POST",
         credentials: "same-origin",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action: "profile", profile, skills: snapshot.skills, accountSettings, notificationPreferences: notifications }),
+        body: JSON.stringify({
+          action: "profile",
+          profile,
+          skills: snapshot.skills,
+          accountSettings,
+          notificationPreferences: {
+            ...notifications,
+            emailEnabled: Boolean(snapshot.account.email) && notifications.emailEnabled,
+          },
+        }),
       });
       const payload = await readAccountResponse(response);
-      const returned = normalizeAccountPayload(payload, user.id, email);
+      const returned = normalizeAccountPayload(payload, user.id, email, user.provider);
       setSnapshot((current) => returned.profile.displayName || returned.account.displayName ? returned : current);
       setNotice(extraSettings.deletionRequestedAt ? "Your account deletion request was recorded." : extraSettings.dataExportRequestedAt ? "Your data export request was recorded." : "Settings saved.");
     } catch (caught) {
@@ -110,9 +124,14 @@ export default function SettingsClient({ user }: Props) {
   }
 
   const completeness = snapshot ? Math.max(snapshot.profile.profileCompleteness, calculateProfileCompleteness(snapshot.profile, snapshot.skills)) : 0;
+  const accountEmail = snapshot?.account.email ?? email;
+  const accountProvider = snapshot?.account.provider ?? user.provider;
+  const providerName = authProviderName(accountProvider);
+  const hasEmail = Boolean(accountEmail);
+  const hasEmailPassword = hasEmail && accountProvider === "email";
 
   return (
-    <AccountShell active="settings" email={email} name={snapshot?.profile.displayName ?? ""} completeness={completeness}>
+    <AccountShell active="settings" email={accountEmail} provider={accountProvider} name={snapshot?.profile.displayName ?? ""} completeness={completeness}>
       {!snapshot ? <LoadingPanel label="Opening your settings…" /> : (
         <>
           <header className={styles.pageHeader}>
@@ -125,8 +144,12 @@ export default function SettingsClient({ user }: Props) {
               <span className={styles.settingIcon} aria-hidden="true">◎</span>
               <h2>Account</h2>
               <p>Your sign-in identity and security controls.</p>
-              <div className={styles.accountLine}><div><strong>Email</strong><small>{email}</small></div><span aria-label="Verified email">✓</span></div>
-              <div className={styles.accountLine}><div><strong>Password</strong><small>Managed securely by Supabase Auth</small></div><Link className={styles.textLink} href="/auth/forgot-password" prefetch={false}>Change</Link></div>
+              {hasEmail
+                ? <div className={styles.accountLine}><div><strong>Email</strong><small>{accountEmail}</small></div><span>Connected</span></div>
+                : <div className={styles.accountLine}><div><strong>Identity</strong><small>{identitySummary(null, accountProvider)}</small></div><span>Provider managed</span></div>}
+              {hasEmailPassword
+                ? <div className={styles.accountLine}><div><strong>Password</strong><small>Managed securely by Supabase Auth</small></div><Link className={styles.textLink} href="/auth/forgot-password" prefetch={false}>Change</Link></div>
+                : <div className={styles.accountLine}><div><strong>Sign-in security</strong><small>Password and recovery are managed by {providerName}.</small></div><span>Managed</span></div>}
               <div className={styles.accountLine}><div><strong>Session</strong><small>Sign out on this device</small></div><form action="/auth/sign-out" method="post"><button className={styles.textButton} type="submit">Sign out</button></form></div>
             </section>
 
@@ -147,13 +170,23 @@ export default function SettingsClient({ user }: Props) {
                   ["messages", "Messages and connection requests", "When someone reaches out directly."],
                   ["projectUpdates", "Projects and communities", "Updates from places and projects you follow."],
                   ["campReminders", "Building Camp reminders", "Application, schedule and arrival changes."],
-                  ["emailEnabled", "Email notifications", "Allow important Hearthland activity to reach your inbox."],
                 ] as const).map(([key, title, body]) => (
                   <label aria-label={title} className={styles.toggleRow} htmlFor={`notification-${key}`} key={key}>
                     <span><strong>{title}</strong><small>{body}</small></span>
                     <span><input id={`notification-${key}`} type="checkbox" checked={notifications[key]} onChange={(event) => setNotifications((current) => ({ ...current, [key]: event.target.checked }))} /><span className={styles.toggleTrack} /></span>
                   </label>
                 ))}
+                {hasEmail ? (
+                  <label aria-label="Email notifications" className={styles.toggleRow} htmlFor="notification-emailEnabled">
+                    <span><strong>Email notifications</strong><small>Allow important Hearthland activity to reach your inbox.</small></span>
+                    <span><input id="notification-emailEnabled" type="checkbox" checked={notifications.emailEnabled} onChange={(event) => setNotifications((current) => ({ ...current, emailEnabled: event.target.checked }))} /><span className={styles.toggleTrack} /></span>
+                  </label>
+                ) : (
+                  <div className={styles.toggleRow}>
+                    <span><strong>Email notifications unavailable</strong><small>Your sign-in provider did not share an email address.</small></span>
+                    <span><input aria-label="Email notifications unavailable" type="checkbox" checked={false} disabled readOnly /><span className={styles.toggleTrack} /></span>
+                  </div>
+                )}
               </div>
             </section>
 
