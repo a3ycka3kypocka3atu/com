@@ -1,0 +1,2 @@
+[functions.telegram-oidc-compat]
+verify_jwt = false
